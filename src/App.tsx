@@ -1,7 +1,8 @@
 import { Design } from "./_internal/Design";
 import "./App.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getItems } from "./_internal/api";
+import TypeOne from "./cards/TypeOne/TypeOne";
 /**
  * # Intructions:
  *
@@ -58,16 +59,30 @@ import { getItems } from "./_internal/api";
  * Information about pagination is returned in the `pagination` prop.
  *
  */
+
+const initialPaginationParams = {
+    "currentPage": 1,
+    "pageSize": 5,
+    "totalItems": 1000,
+    "totalPages": 200,
+    "hasNextPage": true
+}
+
 export default function App() {
+  const [items, setItems] = useState<any[]>([]);
+  const [pagination, setPagination] = useState<any>(initialPaginationParams);
+
   useEffect(() => {
     const logItems = async () => {
-      const items = await getItems({ page: 1, pageSize: 10 });
-      const items2 = await getItems({ page: 200, pageSize: 5 });
-      console.log("items: ", items);
-      console.log("items2: ", items2);
+      const response = await getItems({
+        page: pagination.currentPage,
+        pageSize: pagination.pageSize
+      });
+      setItems(response.items);
+      setPagination(response.pagination);
     };
     logItems().catch((e) => console.error(e));
-  }, []);
+  }, [pagination.pageSize, pagination.currentPage]);
 
   return (
     <div className="App">
@@ -77,7 +92,18 @@ export default function App() {
         <Design />
       </div>
       <h2 className="centered">Components:</h2>
-      {/* Add component Here */}
+      <main style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, 120px)', gap: '100px', }}>
+        {items?.length > 0 && (
+        items.map((item) => {
+          return (
+            <TypeOne item={item} />
+          )
+        })
+      )}
+      </main>
+      <span>{pagination.totalPages}</span>
+      <button disabled={!pagination.hasNextPage} onClick={() => { setPagination({ ...pagination, currentPage: pagination.currentPage + 1 }) }}>Next Page</button>
     </div>
   );
 }
